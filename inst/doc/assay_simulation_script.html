@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="R. Donnelly" />
+
+<meta name="date" content="2025-09-14" />
+
+<title>Using the EpiPvr package to create access period data</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Using the EpiPvr package to create access
+period data</h1>
+<h4 class="author">R. Donnelly</h4>
+<h4 class="date">2025-09-14</h4>
+
+
+
+<div id="r-markdown" class="section level2">
+<h2>R Markdown</h2>
+<p>This vignette illustrates the use of the AP_assay_simulator.R
+function in the EpiPvr package. The function randomly simulates
+experimental access period data. Common access period experiments
+involve cohorts of insects that are provided access to an infected
+source plant for a set period (Tx), they are then moved to a healthy
+test plant for a set period (Tz), and it is then determined whether or
+not the test plant became infected. Simulating this outcome requires a
+user to specify an acquisition rate, an inoculation rate and a insect
+recovery rate. It also requires that Tx and Ty be defined as well as the
+number of insects in a cohort and the number of experimental replicates
+of the entire procedure.</p>
+<p>The above is the simplest case and it applies to semi-persistently
+transmitted viruses (SPT). If a virus is instead persistently
+transmitted then there is also a latent progression rate to consider (ie
+the rate that a virus-exposed insect becomes infectious). In addition
+for PT viruses the cohort of insects will often be provided an
+intermediate access period on a healthy plant (Ty).</p>
+<p>Therefore in order to simulate experimental data we must pass the
+above assay structure to AP_assay_simulator.R. This is set out below
+first for PT viruses then for SPT viruses.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># EXAMPLE OF PT VIRUS # EXAMPLE OF PT VIRUS # EXAMPLE OF PT VIRUS # EXAMPLE OF PT VIRUS </span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>virusType<span class="ot">=</span><span class="st">&quot;PT&quot;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># set assay structure</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>nReps<span class="ot">=</span><span class="dv">30</span> <span class="co"># number of reps</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>numWF<span class="ot">=</span><span class="dv">20</span> <span class="co"># number of insects in cohorts</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># virus/insect rates per hr</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>alrate<span class="ot">=</span><span class="fl">0.1</span> <span class="co"># acquisition rate</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>berate<span class="ot">=</span><span class="dv">1</span> <span class="co"># inoculation rate</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>gamrate<span class="ot">=</span><span class="fl">0.5</span> <span class="co"># latency progression rate  (NA if SPT virus)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>murate<span class="ot">=</span><span class="fl">0.01</span> <span class="co"># virus clearance rate</span></span></code></pre></div>
+<p>Note that while subassays of the experiment follow the above
+description, in addition they involve performing groups of reps for
+variable durations of one of acquisition access, inoculation access, or
+latent access. Experiments will typically conduct all 3 sub-assays
+(acquisition varying-, latent period varying-, inoculation varying-,
+sub-assays). In what follows we define the variable durations for each
+sub-assay.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>AAP_lens<span class="ot">=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="fl">1.5</span>,<span class="fl">1.75</span>,<span class="dv">2</span>,<span class="fl">2.25</span>,<span class="fl">2.5</span>,<span class="dv">3</span>,<span class="dv">4</span>); <span class="co"># variable duration vectors, hours AAP sub-assay</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>LAP_lens<span class="ot">=</span><span class="fu">c</span>(<span class="fl">0.5</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>);                                        <span class="co"># LAP sub-assay</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>IAP_lens<span class="ot">=</span><span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">10</span>,<span class="dv">15</span>,<span class="dv">20</span>,<span class="dv">25</span>,<span class="dv">30</span>,<span class="dv">40</span>,<span class="dv">50</span>,<span class="dv">60</span>)<span class="sc">/</span><span class="dv">60</span>;                               <span class="co"># IAP sub-assay</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>AAP_Reps<span class="ot">=</span><span class="fu">rep</span>(nReps,<span class="fu">length</span>(AAP_lens));  <span class="co"># vectors for number of replicates</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>LAP_Reps<span class="ot">=</span><span class="fu">rep</span>(nReps,<span class="fu">length</span>(LAP_lens));</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>IAP_Reps<span class="ot">=</span><span class="fu">rep</span>(nReps,<span class="fu">length</span>(IAP_lens));</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>AAP_Infs_zeros<span class="ot">=</span><span class="fu">rep</span>(<span class="dv">0</span>,<span class="fu">length</span>(AAP_lens));  <span class="co"># vectors for num infected test plants-initially 0</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>LAP_Infs_zeros<span class="ot">=</span><span class="fu">rep</span>(<span class="dv">0</span>,<span class="fu">length</span>(LAP_lens));</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>IAP_Infs_zeros<span class="ot">=</span><span class="fu">rep</span>(<span class="dv">0</span>,<span class="fu">length</span>(IAP_lens));</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>AAPinput<span class="ot">=</span><span class="fu">rbind</span>(AAP_lens, AAP_Reps, AAP_Infs_zeros)  <span class="co"># group structural vectors for input</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>LAPinput<span class="ot">=</span><span class="fu">rbind</span>(LAP_lens, LAP_Reps, LAP_Infs_zeros)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>IAPinput<span class="ot">=</span><span class="fu">rbind</span>(IAP_lens, IAP_Reps, IAP_Infs_zeros)</span></code></pre></div>
+<p>While in sub-assays a particular part of the access sequence is
+varied, nevertheless in a given rep cohorts will follow the same
+sequence: access to infected source plant, access to intermediate
+healthy plant, access to healthy test plant. We must therefore also
+define the fixed periods (e.g. in the acquisition varying sub-assay the
+first period of the sequence is varied but the other two periods will be
+fixed). Note that we encode the index corresponding to the varied part
+with -1 so that this part is ignored.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># default durations of acquisition, latent and inoculation periods</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>T_A<span class="ot">=</span><span class="dv">2</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>T_L<span class="ot">=</span><span class="fl">0.5</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>T_I<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Place &#39;-1&#39; in the varied assay component</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>AAPfixedComponent<span class="ot">=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,T_L,T_I)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>LAPfixedComponent<span class="ot">=</span><span class="fu">c</span>(T_A,<span class="sc">-</span><span class="dv">1</span>,T_I)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>IAPfixedComponent<span class="ot">=</span><span class="fu">c</span>(T_A,T_L,<span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>ddur_mat<span class="ot">=</span><span class="fu">rbind</span>(AAPfixedComponent,LAPfixedComponent,IAPfixedComponent)</span></code></pre></div>
+<p>When we pass the required input structure the simulation populates
+the third row of the acquisition varying input sub-assay - that
+corresponding to the number of infected test plants. It does this by
+simulating the timing of events based on exponential distributions and
+the above declared rate parameters.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># simulate and hence populate the number of infected test plants in the AAP subassay</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>assay1<span class="ot">=</span><span class="fu">AP_assay_simulator</span>(AAPinput,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                          AAPfixedComponent,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                          numWF, <span class="fu">c</span>(alrate,berate,gamrate,murate),<span class="at">isVerbose=</span><span class="dv">0</span>,<span class="st">&#39;PT&#39;</span>)  </span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># simulate and hence populate the number of infected test plants in the LAP subassay</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>assay2<span class="ot">=</span><span class="fu">AP_assay_simulator</span>(LAPinput,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                          LAPfixedComponent,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                          numWF, <span class="fu">c</span>(alrate,berate,gamrate,murate),<span class="at">isVerbose=</span><span class="dv">0</span>,<span class="st">&#39;PT&#39;</span>) </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># simulate and hence populate the number of infected test plants in the IAP subassay</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>assay3<span class="ot">=</span><span class="fu">AP_assay_simulator</span>(IAPinput,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                          IAPfixedComponent,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>                          numWF, <span class="fu">c</span>(alrate,berate,gamrate,murate),<span class="at">isVerbose=</span><span class="dv">0</span>,<span class="st">&#39;PT&#39;</span>) </span></code></pre></div>
+<p>We combine the dataset elements together in a AP experimental dataset
+list. Users who wish to run the estimate_virus_parameters functions must
+ensure that their dataset corresponds to this format.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ap_data_sim<span class="ot">=</span><span class="fu">list</span>(<span class="at">d_AAP=</span>assay1,      <span class="co"># AAP sub-assay structure </span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">d_LAP=</span>assay2,      <span class="co"># LAP sub-assay structure  (OMIT IF SPT VIRUS) </span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">d_IAP=</span>assay3,      <span class="co"># IAP sub-assay structure </span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">d_durations=</span>ddur_mat,  <span class="co"># fixed durations</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">d_vectorspp=</span>numWF,     <span class="co"># insects in a cohort</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">d_virusType=</span>virusType) <span class="co"># virus code - element of {&#39;SPT&#39;,&#39;PT&#39;}</span></span></code></pre></div>
+<p>Finally the AP experimental dataset format includes attributes
+corresponding to virus rates. Note that users can input -1 when the rate
+is not known - as will be the case with empirical data.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Adding virus parameters as attributes nb. -1 indicates unknown virus parameters</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">attr</span>(ap_data_sim, <span class="st">&quot;alpha&quot;</span>) <span class="ot">&lt;-</span> alrate <span class="co"># acquisition rate</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">attr</span>(ap_data_sim, <span class="st">&quot;beta&quot;</span>) <span class="ot">&lt;-</span> berate  <span class="co"># inocualation rate</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(gamrate)) {</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">attr</span>(ap_data_sim, <span class="st">&quot;gamma&quot;</span>) <span class="ot">&lt;-</span> gamrate  <span class="co"># latent progression rate(OMIT IF SPT VIRUS) </span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="fu">attr</span>(ap_data_sim, <span class="st">&quot;mu&quot;</span>) <span class="ot">&lt;-</span> murate  <span class="co"># insect recovery rate rate</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ap_data_sim)</span></code></pre></div>
+<pre><code>## $d_AAP
+##       [,1] [,2]  [,3] [,4]  [,5] [,6] [,7] [,8]
+## T_vec    1  1.5  1.75    2  2.25  2.5    3    4
+## R_vec   30 30.0 30.00   30 30.00 30.0   30   30
+## I_vec   12 14.0 19.00   20 24.00 29.0   29   28
+## 
+## $d_LAP
+##       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9]
+## T_vec  0.5    1    2    3    4    5    6    7    8
+## R_vec 30.0   30   30   30   30   30   30   30   30
+## I_vec 22.0   24   28   28   26   28   27   28   23
+## 
+## $d_IAP
+##              [,1]       [,2]  [,3]       [,4]       [,5] [,6]       [,7]
+## T_vec  0.08333333  0.1666667  0.25  0.3333333  0.4166667  0.5  0.6666667
+## R_vec 30.00000000 30.0000000 30.00 30.0000000 30.0000000 30.0 30.0000000
+## I_vec  3.00000000  6.0000000 13.00 10.0000000 12.0000000 18.0 19.0000000
+##             [,8] [,9]
+## T_vec  0.8333333    1
+## R_vec 30.0000000   30
+## I_vec 21.0000000   20
+## 
+## $d_durations
+##                   [,1] [,2] [,3]
+## AAPfixedComponent   -1  0.5    1
+## LAPfixedComponent    2 -1.0    1
+## IAPfixedComponent    2  0.5   -1
+## 
+## $d_vectorspp
+## [1] 20
+## 
+## $d_virusType
+## [1] &quot;PT&quot;
+## 
+## attr(,&quot;alpha&quot;)
+## [1] 0.1
+## attr(,&quot;beta&quot;)
+## [1] 1
+## attr(,&quot;gamma&quot;)
+## [1] 0.5
+## attr(,&quot;mu&quot;)
+## [1] 0.01</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># example save command</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">#save(ap_data_sim,file=&quot;myvirusdataset.rda&quot;))</span></span></code></pre></div>
+</div>
+<div id="including-plots" class="section level2">
+<h2>Including Plots</h2>
+<p>One can visualise the datasets that have been generated.</p>
+<p><img src="data:image/png;base64,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" /><!-- --><img src="data:image/png;base64,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" /><!-- --><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAEgCAMAAAAjXV6yAAAAYFBMVEUAAAAAADoAAGYAOpAAZrY6AAA6ADo6AGY6ZrY6kNtmAABmADpmZjpmtrZmtv+QOgCQkGaQtpCQ2/+2ZgC2Zjq225C2/7a2///bkDrb/7bb////tmb/25D//7b//9v///+KCFGRAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAJaElEQVR4nO2di3bjJhRFlYnT1p5OMo3ajhrZyf//ZQ3oAZKlg3hICJ29VpPpCkH2DroguODii8xSbP0CUoeCABQEoCAABQEoCEBBAAoCUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIAFASgIAAFASgIQEEACgJQEICCABQEoCAABQEoCEBBAAoCUBCAggAUBFCCbpei49uvjV9SWvQtqC7O4uvT+3YvJkU6QZ9vJ/m9ev7Y7MWkSCfodnmV32veYgZaCzrL7yVbkIEeg0QTqhiDTLRuXnZlbD8DOA4CUBDAvMWeP8rzdq8lSbQg/fR+HwPdLjRkYHTzYpBYcRxkYAwUhSAOFE1GLYgDRZNhDKqK1w1fTYIMB4ocSA/gOAjQB+nvqu0wSJuMBLGbN2kElf2UKweKBqMWREwYpAGaIDFErHmHDegFqSH07XLa7sWkCCftAaNJe3bzJv0tpp7Cri8MQgZakL6+8FlsDLt5AAUBOGkP4KQ9gJP2AE7aAzhpD+CkPYCT9gCOgwBtlusrZxQf0wo6U9BjmlusYp70BJy0BwQO0sVuWC7o8039ptcttptO0UFQGSL4ZCwozGN81oI8njGW39pbs1xQu5llpetujUMMqkM8pmYsqNtTx17MreAm1cWDggAUBFgoSDzNMwb5FdykunhQEICCAJEElUVxkk/9U2PKgwuS62bFaebJ9tiCZBKaOpph6viBXAXZPcrLUmppemqB+tiC2IIQXQxqMz7dr7s1cQQdtxcLdn5QvoIC5XRQUMNUHhoFTdSS+6Q9bzH/gptUF4/FgqqZvrsHLk9nK0gcPHV9QYaqdrvd5L67XAWpkTE6AE8bPx/zUQOlSGuh/JgPq0jQXlqQzWgjiqCvLok66RhUfFm8jjiCume2yWCVgKBC+4pKWVdnK8iyuk2JJCifp3kgqAlQRx5Jz8agAhV49AsBSUHQXC/WNa/sBTlOHBxG0KK7ZPB7RxBk11NN/eYBYpC7II9eTCwnV77nJQcVNB1nPAQZNSwqWD5/XF9OX6VXNnBIQXN3gmsMMipYVlAMpkUmsN9wOqCg+VbiO/3tJkhs13DaNx9j0t7/NsK1LypYnm4XcfJCKrdYcoLuz2NP774bEtaKQUEqD1twg+piLrM5xKAgR5Um8Sxmg7sgv8NNshUU6qjSbAWF2vWcsaCVr7s1DoK46xkUtN/1PLNGnbEgi13PFlP7WQvCyR3NeuExW5DVQ4Z4WjuqIMtdz+V8ngy+biJpei63mN3CYVWcfQRFfQJdQMRxkDgT11lQ3DmMBcQcKN4HTJEErXj7uc0HxR8ozgpa8/Zzm7SvThaJihLnRPIZCavefm4DxVqc5eqy7rNgTjrmWs4C3AaK199/yf9WuO7k7yYrSCQgiimP7QSlHoNEWCnP87dY5ETytHsxsaZ678nmOrHwieSbjaujjIPCpwFvN66OIih4IvmG4+p9tKD9CLLMcg2dSL4fQbaETiTPLAZFqG5XvZhsHp5H/icwkWGHy4yiOnPC71D7jAV9vqkA7PexERkLYnYHKNi2IKfpjuXX3RrnVQ3PDx7JWFCYHVEZC4p33URWwkwSEpTKSphJOoKSWQkzWVnQzKQ9BYHqshEUbaCYSwyKlwacRS/GNGBYkGnAngU3qS4eDoLCbclMMugMcMvuCLMlM81ua4Bb8kKQLZmJDnwGuAmCWzJt1uZzFWSzJdNqbT5bQXhLpuXKaqYxyALbtflMezHMXg55s8Fx4fD5o5x70tjHIW9WuC0cViJIzxnawyFvdrgs+6j0O27qnSgoIrAQxIXDiYJtC7Jbej7aieQCFYPcFg5jHG4SF+f0F7/kjqxb0LrX3ZpIk/bHPZHcbtL+uCeS203a2zxq7IbFJi0m7S0eVi0u5FNknRLOxS1akNeFdi/I4mHV60L7F4QfVr0ulIEgDyjI/0L7EOQ33bHgQi5FUhAUCwryv9CxBe2V4XSH526f/DAmzL68d/vkhzblGmK3T34smw86IKMW5LfbJz+0GBRit09+aOti/WQS77IejoMAFATQBInj7XzXxfJDD9Lyo0QZpE2MtXkBu3kTI7tDEHigWGt3rVx2dNkKolciI4FTLrd2+FhtH0sityDxgFc3r+Xz7f6PyuHN6ZXIk/qcPh3ldun+9EaFgLgxSFlvkvfVEY3LZyyNSpoPXV7ezOt+eGdUiIjbiz1wYvuXm6jk+pvbC7z/+bvgsegvFXccpN6OEdbsT4Z/WEn97d+L4562XtD4VU0zikFBUc1FbzQOS45GJZW4Udw+gagzMn5VM4x6saCMXkrtGKN7QU8L/vqDevwERZkIGjZmh/YzqERFDssjeU08bzHbE8kXMQiHlVPwMCpRb8spVKcYpM0O1XEIYVTi8bHdtW83HwN9SHZ9cewGjHGdGMi6dSi110CxKmZOqvegUkMr0e9U6hZ2GGlplcgRn0c3r+qoFj9qVPOfBnFglKBmAM8H+TFKkEfoyx0KAlAQgIIAFARoBXHVcAKuiwEoCEBBAAoCUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIAFASgIAAFASgIQEGAVQQ1iQJls6beHDVzelDk0S+/LkjuCp8GtqKg2/c/1YKA2tQojtYdFnlAlMy3BawoqPr2j0qPaHZ9Gk4oSCSeNMmXjaAum0Qko/x8epcq7l9u33+KtadSJuSI3OTn/9Syncp7uV1+XPRUneuL+P+zKKhuxq6AzGv21bueIPFFpWAOWpBIDK4LTZC890QCmCiu3vKr2hEpUuxvl64iyfVFJvCrs8JVaVVA/gFqX0PrCSrlHgKZ/NbEID0Bv9QFnZs9xuJHrSCVoVOLYmcji1MmrjVfXlVp9e8wC8WrCWrciBfd9GLtgXHyfdS6oO4Yp6IXpJQ0DvTIJH/Qfunam6wnhKHVBDUJeKLFm1vzq8eC7uVlUDcFtT+2EaR2F+0lBjXxWcYXU9DjFtS9bfcWJH9a+m4+WUtQG5FFdDUFNVnLfXBRIVloq4uHMWiJIO9RwlqCWikimg5OvxDOavmBA88f97uib0G3yz1OCW2DXsxSUNd3erGSoL+6XucepofHgzTjIJmE80OLQXetor2NxkHq/bc7WqZbUB1ie9eOH1avf6xxlR0LqiPs3xqzY0F/r7LFf8eC1oGCABQEoCAABQEoCEBBAAoCUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIAFASgIAAFAf4HuP01vWvD2CIAAAAASUVORK5CYII=" /><!-- --></p>
+<p>See below for an illustration of how to create the corresponding data
+for an SPT virus. Note there is no latent period varying sub-assay for
+SPT viruses, and since there is no significant latent period expected,
+the latent progression rate is set to NA.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># EXAMPLE OF SPT VIRUS # EXAMPLE OF SPT VIRUS # EXAMPLE OF SPT VIRUS  </span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>virusType<span class="ot">=</span><span class="st">&quot;SPT&quot;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>nReps<span class="ot">=</span><span class="dv">30</span> <span class="co"># number of reps</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>numWF<span class="ot">=</span><span class="dv">20</span> <span class="co"># number of insects in cohorts</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co"># virus rates per hr</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>alrate<span class="ot">=</span><span class="fl">0.1</span> <span class="co"># acquisition rate</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>berate<span class="ot">=</span><span class="dv">1</span> <span class="co"># inoculation rate</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>gamrate<span class="ot">=</span><span class="cn">NA</span> <span class="co"># latency progression rate</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>murate<span class="ot">=</span><span class="dv">1</span> <span class="co"># virus clearance rate</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>AAP_lens<span class="ot">=</span><span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="fl">3.5</span>,<span class="dv">4</span>,<span class="fl">4.5</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">8</span>); <span class="co"># hours</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>IAP_lens<span class="ot">=</span><span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">10</span>,<span class="dv">15</span>,<span class="dv">20</span>,<span class="dv">25</span>,<span class="dv">30</span>,<span class="dv">40</span>,<span class="dv">50</span>,<span class="dv">60</span>)<span class="sc">/</span><span class="dv">60</span>; <span class="co"># hours</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>AAP_Reps<span class="ot">=</span><span class="fu">rep</span>(nReps,<span class="fu">length</span>(AAP_lens)); </span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>IAP_Reps<span class="ot">=</span><span class="fu">rep</span>(nReps,<span class="fu">length</span>(IAP_lens));</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>AAP_Infs_zeros<span class="ot">=</span><span class="fu">rep</span>(<span class="dv">0</span>,<span class="fu">length</span>(AAP_lens)); </span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>IAP_Infs_zeros<span class="ot">=</span><span class="fu">rep</span>(<span class="dv">0</span>,<span class="fu">length</span>(IAP_lens));</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>AAPinput<span class="ot">=</span><span class="fu">rbind</span>(AAP_lens, AAP_Reps, AAP_Infs_zeros)</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>IAPinput<span class="ot">=</span><span class="fu">rbind</span>(IAP_lens, IAP_Reps, IAP_Infs_zeros)</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="co"># default durations of acquisition and inoculation periods </span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>T_A<span class="ot">=</span><span class="dv">4</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>T_I<span class="ot">=</span><span class="dv">6</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Place &#39;-1&#39; in active assay component</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>AAPfixedComponent<span class="ot">=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">0</span>,T_I) <span class="co"># 0 hours for LAP fixed duration since SPT virus</span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>IAPfixedComponent<span class="ot">=</span><span class="fu">c</span>(T_A,<span class="dv">0</span>,<span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>assay1<span class="ot">=</span><span class="fu">AP_assay_simulator</span>(AAPinput,</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>                          AAPfixedComponent,</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>                          numWF, <span class="fu">c</span>(alrate,berate,gamrate,murate),<span class="at">isVerbose=</span><span class="dv">0</span>,virusType)  </span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>assay3<span class="ot">=</span><span class="fu">AP_assay_simulator</span>(IAPinput,</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>                          IAPfixedComponent,</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>                          numWF, <span class="fu">c</span>(alrate,berate,gamrate,murate),<span class="at">isVerbose=</span><span class="dv">0</span>,virusType) </span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a><span class="co"># dataset format for SPT does not include LAP</span></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>ddur_mat<span class="ot">=</span><span class="fu">rbind</span>(AAPfixedComponent[<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>)],IAPfixedComponent[<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>)])</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>ap_data_sim<span class="ot">=</span><span class="fu">list</span>(<span class="at">d_AAP=</span>assay1,</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>                 <span class="at">d_IAP=</span>assay3,</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>                 <span class="at">d_durations=</span>ddur_mat,</span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>                 <span class="at">d_vectorspp=</span>numWF,</span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>                 <span class="at">d_virusType=</span>virusType)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Adding virus parameters as attributes nb. -1 indicates unknown virus parameters</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># note that dataset format does not include gamma atttibute for SPT virus</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">attr</span>(ap_data_sim, <span class="st">&quot;alpha&quot;</span>) <span class="ot">&lt;-</span> alrate </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">attr</span>(ap_data_sim, <span class="st">&quot;beta&quot;</span>) <span class="ot">&lt;-</span> berate </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="fu">attr</span>(ap_data_sim, <span class="st">&quot;mu&quot;</span>) <span class="ot">&lt;-</span> murate </span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ap_data_sim)</span></code></pre></div>
+<pre><code>## $d_AAP
+##       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8]
+## T_vec    2    3  3.5    4  4.5    5    6    8
+## R_vec   30   30 30.0   30 30.0   30   30   30
+## I_vec   19   18 15.0   19 16.0   12   22   23
+## 
+## $d_IAP
+##              [,1]       [,2]  [,3]       [,4]       [,5] [,6]       [,7]
+## T_vec  0.08333333  0.1666667  0.25  0.3333333  0.4166667  0.5  0.6666667
+## R_vec 30.00000000 30.0000000 30.00 30.0000000 30.0000000 30.0 30.0000000
+## I_vec  5.00000000  8.0000000  7.00 10.0000000 13.0000000 16.0 16.0000000
+##             [,8] [,9]
+## T_vec  0.8333333    1
+## R_vec 30.0000000   30
+## I_vec 12.0000000   15
+## 
+## $d_durations
+##      [,1] [,2]
+## [1,]   -1    6
+## [2,]    4   -1
+## 
+## $d_vectorspp
+## [1] 20
+## 
+## $d_virusType
+## [1] &quot;SPT&quot;
+## 
+## attr(,&quot;alpha&quot;)
+## [1] 0.1
+## attr(,&quot;beta&quot;)
+## [1] 1
+## attr(,&quot;mu&quot;)
+## [1] 1</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">#save(ap_data_sim,file=paste0(&quot;data/&quot;,virusType,&quot;_DELETE_SIM_AccessExp_new.rda&quot;))</span></span></code></pre></div>
+</div>
+<div id="including-plots-1" class="section level2">
+<h2>Including Plots</h2>
+<p>Plotting the simulated dataset.</p>
+<p><img src="data:image/png;base64,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" /><!-- --><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

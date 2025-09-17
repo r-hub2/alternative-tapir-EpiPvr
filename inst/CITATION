@@ -1,0 +1,18 @@
+citHeader("To cite EpiPvr in publications, please use:")
+
+citEntry(
+  entry    = "Article",
+  title    = "Plant pathogen profiling with the EpiPv package",
+  author = c(
+    person("Ruairi", "Donnelly"),
+    person("Israel", "Tankam"),
+    person("Chris", "Gilligan")
+  ),
+  year     = "2025",
+  journal  = "EcoEvoRxiv",
+  doi      = "https://doi.org/10.32942/X29K9P",
+  textVersion = paste(
+    "Donnelly et al. (2025). Plant pathogen profiling with the EpiPv package.",
+    "EcoEvorXiv. doi:https://doi.org/10.32942/X29K9P"
+  )
+)

@@ -1,0 +1,51 @@
+
+1: Definitely
+2: Uhhhh... Maybe?
+3: I forget
+
+Enter an item from the menu, or 0 to exit
+Enter an item from the menu, or 0 to exit
+
+1: Yup
+2: Uhhhh... Maybe?
+3: Nope
+
+Enter an item from the menu, or 0 to exit
+
+1: Of course
+2: I forget
+3: Nope
+
+Enter an item from the menu, or 0 to exit
+Enter an item from the menu, or 0 to exit
+Enter an item from the menu, or 0 to exit
+
+1: Nope
+2: Uhhhh... Maybe?
+3: Yup
+
+Enter an item from the menu, or 0 to exit
+Enter an item from the menu, or 0 to exit
+
+1: Not yet
+2: I forget
+3: For sure
+
+Enter an item from the menu, or 0 to exit
+Enter an item from the menu, or 0 to exit
+Enter an item from the menu, or 0 to exit
+Enter an item from the menu, or 0 to exit
+
+
+1: Nope
+2: Yes
+3: No
+
+Enter an item from the menu, or 0 to exit
+Enter an item from the menu, or 0 to exit
+[1] "C:/Users/ruair/Documents/EpiPvr"
+function () 
+.Internal(getwd())
+<bytecode: 0x00000222d2cac3d0>
+<environment: namespace:base>
+[1] 4
