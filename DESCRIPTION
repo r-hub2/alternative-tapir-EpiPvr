@@ -33,6 +33,6 @@ VignetteBuilder: knitr
 URL: https://CRAN.R-project.org/package=EpiPvr
 LazyData: true
 NeedsCompilation: yes
-Packaged: 2025-09-17 09:46:57 UTC; ruair
+Packaged: 2025-09-17 16:26:48 UTC; ruair
 Author: Ruairi Donnelly [aut, cre, cph]
 Maintainer: Ruairi Donnelly <rd501@cam.ac.uk>
